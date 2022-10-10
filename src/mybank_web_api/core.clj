@@ -16,11 +16,18 @@
   {:name  :contas-interceptor
    :enter add-contas-atom})
 
+(def account-not-found
+  {:status 404
+   :headers {"Content-Type" "text/plain"}
+   :body {:message "Account not found"}})
+
 (defn get-saldo [request]
   (let [id-conta (-> request :path-params :id keyword)]
-    {:status 200
-     :headers {"Content-Type" "text/plain"}
-     :body (id-conta @db/contas "conta inválida!")}))
+    (if (api-logic/account-exists? id-conta @db/contas)
+      {:status 200
+       :headers {"Content-Type" "text/plain"}
+       :body (id-conta @db/contas "conta inválida!")}
+      account-not-found)))
 
 (defn make-withdraw
   [request]
@@ -34,10 +41,7 @@
            :body    {:id-conta       id-conta
                      :valor-do-saque withdrawal-value
                      :novo-saldo     (id-conta @db/contas)}})
-        {:status 404
-         :headers {"Content-Type" "text/plain"}
-         :body {:message "Account not founded"}})
-      ))
+        account-not-found)))
 
 (defn make-deposit [request]
   (let [id-conta (-> request :path-params :id keyword)
@@ -50,9 +54,7 @@
            :headers {"Content-Type" "text/plain"}
            :body {:id-conta   id-conta
                   :novo-saldo (id-conta @db/contas)}})
-      {:status 404
-       :headers {"Content-Type" "text/plain"}
-       :body {:message "Account not founded"}})))
+      account-not-found)))
 
 (def routes
   (route/expand-routes
@@ -93,16 +95,18 @@
   (http/stop @server)
   (reset-server)
 
-
+  ;Success path
   (test-request server :get "/saldo/1")
   (test-request server :get "/saldo/2")
   (test-request server :get "/saldo/3")
-  (test-request server :get "/saldo/4")
   (test-post server :post "/deposito/1" "199.93")
-  (test-post server :post "/deposito/4" "325.99")
   (test-post server :post "/saque/1" "199.93")
-  (test-post server :post "/saque/5" "199.93")
+
+  ;Failure path
+  (test-request server :get "/saldo/4")
+  (test-post server :post "/deposito/4" "325.99")
   (test-post server :post "/deposito/5" "325.99")
+  (test-post server :post "/saque/5" "199.93")
 
   ;curl http://localhost:9999/saldo/1
   ;curl -d "199.99" -X POST http://localhost:9999/deposito/1
