@@ -8,7 +8,10 @@
                  [io.pedestal/pedestal.service "0.5.10"]
                  [io.pedestal/pedestal.route "0.5.10"]
                  [io.pedestal/pedestal.jetty "0.5.10"]
-                 [clj-http "3.12.3"]]
+                 [clj-http "3.12.3"]
+                 [com.stuartsierra/component "1.1.0"]
+                 [walmartlabs/system-viz "0.4.0"]
+                 [org.clojure/data.json "0.2.6"]]
   :main ^:skip-aot mybank-web-api.core
   :target-path "target/%s"
   :profiles {:uberjar {:aot      :all
